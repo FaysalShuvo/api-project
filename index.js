@@ -14,7 +14,7 @@ const data = require("./lib/data");
 const app = {};
 
 // testing file system
-data.update("test", "newFile", { name: "x", f: "e" }, (err) => {
+data.delete("test", "newFile", (err) => {
   console.log(err);
 });
 
