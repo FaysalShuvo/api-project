@@ -1,19 +1,20 @@
 /*
  * Title: User Handler
- * Description:
- * Author: Md. Faysal Islam Shuvo
- * Date:
+ * Description: Handler to handle user related routes
+ * Author: Sumit Saha ( Learn with Sumit )
+ * Date: 11/21/2020
+ *
  */
-
 // dependencies
 const data = require("../../lib/data");
-const { hash, parseJSON } = require("../../helpers/utilities");
+const { hash } = require("../../helpers/utilities");
+const { parseJSON } = require("../../helpers/utilities");
+
 // module scaffolding
 const handler = {};
 
 handler.userHandler = (requestProperties, callback) => {
   const acceptedMethods = ["get", "post", "put", "delete"];
-
   if (acceptedMethods.indexOf(requestProperties.method) > -1) {
     handler._users[requestProperties.method](requestProperties, callback);
   } else {
@@ -38,7 +39,7 @@ handler._users.post = (requestProperties, callback) => {
 
   const phone =
     typeof requestProperties.body.phone === "string" &&
-    requestProperties.body.phone.trim().length === 3
+    requestProperties.body.phone.trim().length === 11
       ? requestProperties.body.phone
       : false;
 
@@ -88,11 +89,12 @@ handler._users.post = (requestProperties, callback) => {
   }
 };
 
+// @TODO: Authentication
 handler._users.get = (requestProperties, callback) => {
   // check the phone number if valid
   const phone =
     typeof requestProperties.queryStringObject.phone === "string" &&
-    requestProperties.queryStringObject.phone.trim().length === 3
+    requestProperties.queryStringObject.phone.trim().length === 11
       ? requestProperties.queryStringObject.phone
       : false;
   if (phone) {
@@ -115,11 +117,12 @@ handler._users.get = (requestProperties, callback) => {
   }
 };
 
+// @TODO: Authentication
 handler._users.put = (requestProperties, callback) => {
   // check the phone number if valid
   const phone =
     typeof requestProperties.body.phone === "string" &&
-    requestProperties.body.phone.trim().length === 3
+    requestProperties.body.phone.trim().length === 11
       ? requestProperties.body.phone
       : false;
 
@@ -143,7 +146,7 @@ handler._users.put = (requestProperties, callback) => {
 
   if (phone) {
     if (firstName || lastName || password) {
-      // lookup the user
+      // loopkup the user
       data.read("users", phone, (err1, uData) => {
         const userData = { ...parseJSON(uData) };
 
@@ -188,11 +191,12 @@ handler._users.put = (requestProperties, callback) => {
   }
 };
 
+// @TODO: Authentication
 handler._users.delete = (requestProperties, callback) => {
   // check the phone number if valid
   const phone =
     typeof requestProperties.queryStringObject.phone === "string" &&
-    requestProperties.queryStringObject.phone.trim().length === 11
+    requestProperties.queryStringObject.phone.trim().length === 3
       ? requestProperties.queryStringObject.phone
       : false;
 

@@ -13,15 +13,17 @@ const environments = require("./environment");
 // module scaffolding
 const utilities = {};
 
-// parse JSON to Object
+// parse JSON string to Object
 utilities.parseJSON = (jsonString) => {
   let output;
+
   try {
     output = JSON.parse(jsonString);
-  } catch (error) {
+  } catch (err) {
+    console.log(err);
     output = {};
-    console.log(error);
   }
+
   return output;
 };
 
