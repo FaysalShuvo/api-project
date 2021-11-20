@@ -14,8 +14,8 @@ const data = require("./lib/data");
 const app = {};
 
 // testing file system
-data.create("test", "newFile", { name: "shuvo", age: 25 }, (err) => {
-  console.log(`error was`, err);
+data.update("test", "newFile", { name: "x", f: "e" }, (err) => {
+  console.log(err);
 });
 
 // create server
