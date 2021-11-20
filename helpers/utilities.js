@@ -16,7 +16,6 @@ const utilities = {};
 // parse JSON to Object
 utilities.parseJSON = (jsonString) => {
   let output;
-
   try {
     output = JSON.parse(jsonString);
   } catch (error) {
