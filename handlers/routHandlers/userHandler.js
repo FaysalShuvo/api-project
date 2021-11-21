@@ -93,7 +93,7 @@ handler._users.get = (requestProperties, callback) => {
   // check the phone number if valid
   const phone =
     typeof requestProperties.queryStringObject.phone === "string" &&
-    requestProperties.queryStringObject.phone.trim().length === 11
+    requestProperties.queryStringObject.phone.trim().length === 3
       ? requestProperties.queryStringObject.phone
       : false;
   if (phone) {
@@ -116,12 +116,11 @@ handler._users.get = (requestProperties, callback) => {
   }
 };
 
-// @TODO: Authentication
 handler._users.put = (requestProperties, callback) => {
   // check the phone number if valid
   const phone =
     typeof requestProperties.body.phone === "string" &&
-    requestProperties.body.phone.trim().length === 11
+    requestProperties.body.phone.trim().length === 3
       ? requestProperties.body.phone
       : false;
 

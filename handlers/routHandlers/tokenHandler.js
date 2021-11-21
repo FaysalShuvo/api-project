@@ -75,7 +75,31 @@ handler._token.post = (requestProperties, callback) => {
   }
 };
 
-handler._token.get = (requestProperties, callback) => {};
+handler._token.get = (requestProperties, callback) => {
+  // check the id if valid
+  const id =
+    typeof requestProperties.queryStringObject.id === "string" &&
+    requestProperties.queryStringObject.id.trim().length === 11
+      ? requestProperties.queryStringObject.id
+      : false;
+  if (id) {
+    // lookup the user
+    data.read("tokens", id, (err, tokenData) => {
+      const token = { ...parseJSON(tokenData) };
+      if (!err && token) {
+        callback(200, token);
+      } else {
+        callback(404, {
+          error: " token was not found!",
+        });
+      }
+    });
+  } else {
+    callback(404, {
+      error: "Requested token was not found!",
+    });
+  }
+};
 
 handler._token.put = (requestProperties, callback) => {};
 
