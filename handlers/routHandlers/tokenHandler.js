@@ -101,7 +101,48 @@ handler._token.get = (requestProperties, callback) => {
   }
 };
 
-handler._token.put = (requestProperties, callback) => {};
+handler._token.put = (requestProperties, callback) => {
+  // check the id if valid
+  const id =
+    typeof requestProperties.body.id === "string" &&
+    requestProperties.body.id.trim().length === 11
+      ? requestProperties.body.id
+      : false;
+
+  // check the id if valid
+  const extend =
+    typeof requestProperties.body.extend === "boolean" &&
+    requestProperties.body.extend === true
+      ? true
+      : false;
+
+  if (id && extend) {
+    data.read("tokens", id, (err, tokenData) => {
+      let tokenObject = parseJSON(tokenData);
+      if (tokenObject.expires > Date.now()) {
+        tokenObject.expires = Date.now() + 60 * 60 * 1000;
+        // store the updated token
+        data.update("tokens", id, tokenObject, (err2) => {
+          if (!err2) {
+            callback(200);
+          } else {
+            callback(400, {
+              error: "Server side error!",
+            });
+          }
+        });
+      } else {
+        callback(400, {
+          error: "Token Expired!",
+        });
+      }
+    });
+  } else {
+    callback(400, {
+      error: "There was a problem in your req!",
+    });
+  }
+};
 
 handler._token.delete = (requestProperties, callback) => {};
 
