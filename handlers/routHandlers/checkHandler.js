@@ -1,156 +1,271 @@
 /*
- * Title: check Handler
- * Description: Handler to handle user define
- * Author:
- * Date:
+ * Title: User Handler
+ * Description: Handler to handle user related routes
+ * Author: Sumit Saha ( Learn with Sumit )
+ * Date: 11/21/2020
  *
  */
 // dependencies
 const data = require("../../lib/data");
 const { hash } = require("../../helpers/utilities");
-const { parseJSON, createRandomString } = require("../../helpers/utilities");
+const { parseJSON } = require("../../helpers/utilities");
 const tokenHandler = require("./tokenHandler");
-const { maxChecks } = require("../../helpers/environment");
 
 // module scaffolding
 const handler = {};
 
-handler.checkHandler = (requestProperties, callback) => {
+handler.userHandler = (requestProperties, callback) => {
   const acceptedMethods = ["get", "post", "put", "delete"];
   if (acceptedMethods.indexOf(requestProperties.method) > -1) {
-    handler._check[requestProperties.method](requestProperties, callback);
+    handler._users[requestProperties.method](requestProperties, callback);
   } else {
     callback(405);
   }
 };
 
-handler._check = {};
+handler._users = {};
 
-handler._check.post = (requestProperties, callback) => {
-  // validate inputs
-  let protocol =
-    typeof requestProperties.body.protocol === "string" &&
-    ["http", "https"].indexOf(requestProperties.body.protocol) > -1
-      ? requestProperties.body.protocol
+handler._users.post = (requestProperties, callback) => {
+  const firstName =
+    typeof requestProperties.body.firstName === "string" &&
+    requestProperties.body.firstName.trim().length > 0
+      ? requestProperties.body.firstName
       : false;
 
-  let url =
-    typeof requestProperties.body.url === "string" &&
-    requestProperties.body.url.trim().length > 0
-      ? requestProperties.body.url
+  const lastName =
+    typeof requestProperties.body.lastName === "string" &&
+    requestProperties.body.lastName.trim().length > 0
+      ? requestProperties.body.lastName
       : false;
 
-  let method =
-    typeof requestProperties.body.method === "string" &&
-    ["GET", "POST", "PUT", "DELETE"].indexOf(requestProperties.body.method) > -1
-      ? requestProperties.body.method
+  const phone =
+    typeof requestProperties.body.phone === "string" &&
+    requestProperties.body.phone.trim().length === 11
+      ? requestProperties.body.phone
       : false;
 
-  let successCodes =
-    typeof requestProperties.body.successCodes === "object" &&
-    requestProperties.body.successCodes instanceof Array
-      ? requestProperties.body.successCodes
+  const password =
+    typeof requestProperties.body.password === "string" &&
+    requestProperties.body.password.trim().length > 0
+      ? requestProperties.body.password
       : false;
 
-  let timeOutSeconds =
-    typeof requestProperties.body.timeOutSeconds === "number" &&
-    requestProperties.body.timeOutSeconds % 1 === 0 &&
-    requestProperties.body.timeOutSeconds >= 1 &&
-    requestProperties.body.timeOutSeconds <= 5
-      ? requestProperties.body.timeOutSeconds
+  const tosAgreement =
+    typeof requestProperties.body.tosAgreement === "boolean" &&
+    requestProperties.body.tosAgreement
+      ? requestProperties.body.tosAgreement
       : false;
 
-  console.log(timeOutSeconds);
-  if (protocol && url && method && successCodes && timeOutSeconds) {
-    let token =
-      typeof requestProperties.headersObj.token === "string"
-        ? requestProperties.headersObj.token
-        : false;
-
-    // look up the user phone by reading token
-    data.read("tokens", token, (err1, tokenData) => {
-      if (!err1 && tokenData) {
-        let userPhone = parseJSON(tokenData).phone;
-        // user data
-        data.read("users", userPhone, (err2, userData) => {
-          if (!err2 && userData) {
-            tokenHandler._token.verify(token, userPhone, (tokenIsValid) => {
-              if (tokenIsValid) {
-                let userObject = parseJSON(userData);
-                let userChecks =
-                  typeof userObject.checks === "object" &&
-                  userObject.checks instanceof Array
-                    ? userObject.checks
-                    : [];
-
-                if (userChecks.length < maxChecks) {
-                  let checkID = createRandomString(20);
-                  let checkObject = {
-                    id: checkID,
-                    userPhone,
-                    protocol,
-                    url,
-                    method,
-                    successCodes,
-                    timeOutSeconds,
-                  };
-                  //   save the obj
-                  data.create("checks", checkID, checkObject, (err3) => {
-                    if (!err3) {
-                      // add check id to the user
-                      userObject.checks = userChecks;
-                      userObject.checks.push(checkID);
-
-                      //   save new user data
-                      data.update("users", userPhone, userObject, (err4) => {
-                        if (!err4) {
-                          callback(200, checkObject);
-                        } else {
-                          callback(401, {
-                            error: " in the server",
-                          });
-                        }
-                      });
-                    } else {
-                      callback(401, {
-                        error: "Problem in the server",
-                      });
-                    }
-                  });
-                } else {
-                  callback(401, {
-                    error: "use has max check limit",
-                  });
-                }
-              } else {
-                callback(403, {
-                  error: "Auth Failure",
-                });
-              }
+  if (firstName && lastName && phone && password && tosAgreement) {
+    // make sure that the user doesn't already exists
+    data.read("users", phone, (err1) => {
+      if (err1) {
+        const userObject = {
+          firstName,
+          lastName,
+          phone,
+          password: hash(password),
+          tosAgreement,
+        };
+        // store the user to db
+        data.create("users", phone, userObject, (err2) => {
+          if (!err2) {
+            callback(200, {
+              message: "User was created successfully!",
             });
           } else {
-            callback(403, {
-              error: "User not Found!",
-            });
+            callback(500, { error: "Could not create user!" });
           }
         });
       } else {
-        callback(403, {
-          error: "Auth Problem",
+        callback(500, {
+          error: "There was a problem in server side!",
         });
       }
     });
   } else {
     callback(400, {
-      error: "You have a problem in check handler",
+      error: "You have a problem in your request",
     });
   }
 };
 
-handler._check.get = (requestProperties, callback) => {};
+handler._users.get = (requestProperties, callback) => {
+  // check the phone number if valid
+  const phone =
+    typeof requestProperties.queryStringObject.phone === "string" &&
+    requestProperties.queryStringObject.phone.trim().length === 11
+      ? requestProperties.queryStringObject.phone
+      : false;
+  if (phone) {
+    // verify token
+    const token =
+      typeof requestProperties.headersObject.token === "string"
+        ? requestProperties.headersObject.token
+        : false;
 
-handler._check.put = (requestProperties, callback) => {};
+    tokenHandler._token.verify(token, phone, (tokenId) => {
+      if (tokenId) {
+        // lookup the user
+        data.read("users", phone, (err, u) => {
+          const user = { ...parseJSON(u) };
+          if (!err && user) {
+            delete user.password;
+            callback(200, user);
+          } else {
+            callback(404, {
+              error: "Requested user was not found!",
+            });
+          }
+        });
+      } else {
+        callback(403, {
+          error: "Authentication failure!",
+        });
+      }
+    });
+  } else {
+    callback(404, {
+      error: "Requested user was not found!",
+    });
+  }
+};
 
-handler._check.delete = (requestProperties, callback) => {};
+handler._users.put = (requestProperties, callback) => {
+  // check the phone number if valid
+  const phone =
+    typeof requestProperties.body.phone === "string" &&
+    requestProperties.body.phone.trim().length === 11
+      ? requestProperties.body.phone
+      : false;
+
+  const firstName =
+    typeof requestProperties.body.firstName === "string" &&
+    requestProperties.body.firstName.trim().length > 0
+      ? requestProperties.body.firstName
+      : false;
+
+  const lastName =
+    typeof requestProperties.body.lastName === "string" &&
+    requestProperties.body.lastName.trim().length > 0
+      ? requestProperties.body.lastName
+      : false;
+
+  const password =
+    typeof requestProperties.body.password === "string" &&
+    requestProperties.body.password.trim().length > 0
+      ? requestProperties.body.password
+      : false;
+
+  if (phone) {
+    if (firstName || lastName || password) {
+      // verify token
+      const token =
+        typeof requestProperties.headersObject.token === "string"
+          ? requestProperties.headersObject.token
+          : false;
+
+      tokenHandler._token.verify(token, phone, (tokenId) => {
+        if (tokenId) {
+          // loopkup the user
+          data.read("users", phone, (err1, uData) => {
+            const userData = { ...parseJSON(uData) };
+
+            if (!err1 && userData) {
+              if (firstName) {
+                userData.firstName = firstName;
+              }
+              if (lastName) {
+                userData.firstName = firstName;
+              }
+              if (password) {
+                userData.password = hash(password);
+              }
+
+              // store to database
+              data.update("users", phone, userData, (err2) => {
+                if (!err2) {
+                  callback(200, {
+                    message: "User was updated successfully!",
+                  });
+                } else {
+                  callback(500, {
+                    error: "There was a problem in the server side!",
+                  });
+                }
+              });
+            } else {
+              callback(400, {
+                error: "You have a problem in your request!",
+              });
+            }
+          });
+        } else {
+          callback(403, {
+            error: "Authentication failure!",
+          });
+        }
+      });
+    } else {
+      callback(400, {
+        error: "You have a problem in your request!",
+      });
+    }
+  } else {
+    callback(400, {
+      error: "Invalid phone number. Please try again!",
+    });
+  }
+};
+
+handler._users.delete = (requestProperties, callback) => {
+  // check the phone number if valid
+  const phone =
+    typeof requestProperties.queryStringObject.phone === "string" &&
+    requestProperties.queryStringObject.phone.trim().length === 11
+      ? requestProperties.queryStringObject.phone
+      : false;
+
+  if (phone) {
+    // verify token
+    const token =
+      typeof requestProperties.headersObject.token === "string"
+        ? requestProperties.headersObject.token
+        : false;
+
+    tokenHandler._token.verify(token, phone, (tokenId) => {
+      if (tokenId) {
+        // lookup the user
+        data.read("users", phone, (err1, userData) => {
+          if (!err1 && userData) {
+            data.delete("users", phone, (err2) => {
+              if (!err2) {
+                callback(200, {
+                  message: "User was successfully deleted!",
+                });
+              } else {
+                callback(500, {
+                  error: "There was a server side error!",
+                });
+              }
+            });
+          } else {
+            callback(500, {
+              error: "There was a server side error!",
+            });
+          }
+        });
+      } else {
+        callback(403, {
+          error: "Authentication failure!",
+        });
+      }
+    });
+  } else {
+    callback(400, {
+      error: "There was a problem in your request!",
+    });
+  }
+};
 
 module.exports = handler;
