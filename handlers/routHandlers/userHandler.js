@@ -105,7 +105,6 @@ handler._users.get = (requestProperties, callback) => {
         : false;
 
     tokenHandler._token.verify(token, phone, (tokenId) => {
-      console.log(tokenId);
       if (tokenId) {
         // lookup the user
         data.read("users", phone, (err, u) => {
@@ -167,7 +166,6 @@ handler._users.put = (requestProperties, callback) => {
           : false;
 
       tokenHandler._token.verify(token, phone, (tokenId) => {
-        console.log(tokenId);
         if (tokenId) {
           // lookup the user
           data.read("users", phone, (err1, uData) => {
@@ -236,7 +234,6 @@ handler._users.delete = (requestProperties, callback) => {
         : false;
 
     tokenHandler._token.verify(token, phone, (tokenId) => {
-      console.log(tokenId);
       if (tokenId) {
         // lookup the user
         data.read("users", phone, (err1, userData) => {
