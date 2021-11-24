@@ -1,7 +1,7 @@
 /*
  * Title: User Handler
  * Description: Handler to handle user related routes
- * Author: Sumit Saha ( Learn with Sumit )
+ * Author:
  * Date: 11/21/2020
  *
  */
@@ -167,7 +167,7 @@ handler._users.put = (requestProperties, callback) => {
 
       tokenHandler._token.verify(token, phone, (tokenId) => {
         if (tokenId) {
-          // loopkup the user
+          // look up the user
           data.read("users", phone, (err1, uData) => {
             const userData = { ...parseJSON(uData) };
 
